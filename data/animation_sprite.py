@@ -4,6 +4,38 @@ from .in_data import *
 from .entity import *
 
 class AnimationSprite(Entity) : 
+    
+    """
+        AnimationSprite es una clase que maneja la animación de sprites, ya sea a partir de una textura o de una lista de imágenes. Hereda de la clase `Entity`.
+
+        Atributos:
+        - `parent`: Referencia al objeto padre de la entidad.
+        - `name`: str, el nombre de la entidad. Por defecto es "AnimationSprite".
+        - `position`: Vector2, la posición del sprite en la pantalla.
+        - `scale`: Vector2, la escala del sprite.
+        - `rotation`: float, el ángulo de rotación del sprite en grados.
+        - `origin`: Vector2, el punto de origen del sprite para las transformaciones.
+        - `color`: Color, el color aplicado al sprite.
+        - `texture`: str, la ruta de la textura utilizada para la animación.
+        - `frame_per_second`: int, cantidad de frames que se muestran por segundo.
+        - `frame_start`: int, el índice del frame inicial en la animación.
+        - `frame_end`: int, el índice del frame final en la animación.
+        - `texture_cords`: Vector2, coordenadas de la textura.
+        - `texture_size`: Vector2, tamaño de los cuadros de la textura.
+        - `direction_to_animate`: Vector2, dirección en la que avanza la animación en los ejes X e Y.
+        - `use_with_imagens`: bool, determina si se utilizan una lista de imágenes en lugar de una textura única para la animación.
+        - `imagens`: list, lista de rutas de imágenes para la animación si `use_with_imagens` es True.
+        - `frame_select`: int, el índice actual del frame en la animación.
+        - `imganes_list`: dict, un diccionario que almacena las texturas cargadas a partir de la lista de imágenes.
+        - `textura_rectagle`: Rectangle, un rectángulo que define qué parte de la textura se dibuja.
+        - `timer_animation`: float, un temporizador que controla el avance de la animación.
+
+        Métodos:
+        - `__init__(...)`: Inicializa el objeto `AnimationSprite`, cargando la textura o las imágenes según sea necesario y configurando los parámetros de la animación.
+        - `Update(dt)`: Actualiza el frame actual de la animación basado en el tiempo transcurrido `dt` y ajusta la textura o la imagen mostrada.
+        - `Draw()`: Dibuja la animación del sprite en pantalla. Si se utiliza una textura, dibuja la porción correspondiente; si se utiliza una lista de imágenes, dibuja la imagen correcta.
+    """
+
     def __init__(
         self, parent=None, name = "AnimationSprite", position=Vector2(0,0), 
         scale=Vector2(1,1), rotation = 0, origin=Vector2(0.5,0.5), color=WHITE, 

@@ -5,6 +5,27 @@ from .engine import *
 
 class Scena: 
     
+    """
+    Scena es una clase que representa una escena dentro del entorno del juego. Gestiona las entidades que forman parte de la escena y se encarga de actualizar y dibujar dichas entidades.
+
+    Atributos:
+    - `name`: str, el nombre de la escena. Si el nombre ya existe en `Scenas`, se le agrega un sufijo numérico único.
+    - `type`: str, el tipo de entidad, en este caso siempre es "SCENA".
+    - `entitys`: list, una lista de entidades (`Entity`) que pertenecen a esta escena.
+    - `type_entitys`: dict, un diccionario que almacena las entidades con sus nombres como claves.
+    - `use_y_index`: bool, determina si las entidades deben ser ordenadas por su índice `y_index` (posición vertical) al dibujar. Por defecto, es `False`.
+    - `index`: int, índice que define el orden de la escena. Si es 0, utiliza la longitud actual de `Scenas` para establecer su valor.
+    - `visible`: bool, determina si la escena es visible. Por defecto es `True`.
+
+    Métodos:
+    - `__init__(...)`: Inicializa la escena con un nombre, y opcionalmente permite definir si debe usar `y_index` para ordenar sus entidades, su índice y su visibilidad.
+    - `Remove_Entity(entity)`: Remueve una entidad dada de la lista de entidades y de los diccionarios de `Entitys` y `Type_Entitys` si existe. Ignora si no la encuentra.
+    - `Update(dt)`: Actualiza todas las entidades de la escena. Si `use_y_index` es `True`, ordena las entidades por `y_index`, de lo contrario las ordena por `index`.
+    - `Draw()`: Dibuja todas las entidades de la escena que sean visibles (`visible` == True).
+    """
+
+    
+    
     def __init__(self, name, use_y_index = False, index = 0, visible = True):
         self.name = name if name in Scenas else name + f".{len(Scenas):003}"
         self.type = "SCENA"

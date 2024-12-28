@@ -5,6 +5,31 @@ from .entity import *
 
 
 class ModelBasic(Entity):
+    
+    """
+    ModelBasic es una clase que representa una entidad visual básica, como un rectángulo, círculo o cápsula, en un entorno 2D. Hereda de la clase `Entity` y añade funcionalidad específica para el dibujo de modelos básicos.
+
+    Atributos:
+    - `parent`: Scena, el objeto padre de la entidad.
+    - `name`: str, el nombre de la entidad. Se inicializa como "Entity" por defecto.
+    - `position`: Vector2, la posición local de la entidad.
+    - `scale`: Vector2, la escala local de la entidad.
+    - `rotation`: float, la rotación local de la entidad.
+    - `origin`: Vector2, el origen para la rotación y escala de la entidad. Por defecto es (0.5, 0.5), centrado.
+    - `color`: Color, el color del modelo que se va a dibujar. Inicializa en blanco (`WHITE`).
+    - `how_model`: str, el tipo de modelo a dibujar. Puede ser "RECTANGLE", "CIRCLE", o "CAPSULE".
+    - `dimension`: float, usado para determinar el tamaño extra de ciertas formas como la cápsula.
+    - `direction`: str, la dirección de la cápsula (para futuros usos o mejoras), inicializa como "VERTICAL".
+    
+    Métodos:
+    - `__init__(...)`: Inicializa una entidad visual básica con las propiedades proporcionadas, llamando también al constructor de `Entity`.
+    - `Draw()`: Dibuja el modelo especificado por `how_model`:
+    - Si es "RECTANGLE", dibuja un rectángulo usando las propiedades de escala, rotación y color.
+    - Si es "CIRCLE", dibuja un círculo basado en la posición y escala de la entidad.
+    - Si es "CAPSULE", dibuja una cápsula utilizando la posición, escala y la propiedad `dimension`.
+    Luego, llama al método `Draw()` de la clase padre para dibujar cualquier entidad hija.
+    """
+        
     def __init__(
         self, parent, 
         name = "Entity", 

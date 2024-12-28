@@ -4,6 +4,36 @@ from .in_data import *
 from .scena import *
 
 class Entity(Scena):
+    
+    """
+        Entity representa una entidad en un entorno 2D, que puede tener un padre y otros atributos como posición, escala y rotación.
+
+        Atributos:
+        - `parent`: Scena, el objeto padre de la entidad que define su jerarquía.
+        - `name`: str, el nombre de la entidad. Si ya existe en el padre, se le añade un identificador único.
+        - `position`: Vector2, la posición local de la entidad respecto a su padre. Inicializa en (0, 0).
+        - `scale`: Vector2, la escala local de la entidad. Inicializa en (1, 1).
+        - `rotation`: float, la rotación local de la entidad en grados.
+        - `origin`: Vector2, el origen de la entidad para rotación y escala. Inicializa en (0.5, 0.5).
+        - `world_position`: Vector2, la posición mundial calculada de la entidad.
+        - `world_scale`: Vector2, la escala mundial acumulada de la entidad.
+        - `world_rotation`: float, la rotación mundial acumulada de la entidad.
+        - `index`: int, índice usado para ordenar la entidad en la jerarquía.
+        - `y_index`: float, posición en el eje Y usada para ordenar la entidad para el renderizado.
+        - `use_y_index`: bool, indica si ordenar las entidades por el eje Y.
+        - `visible`: bool, determina si la entidad es visible o no.
+        - `entitys`: lista, contiene todas las entidades hijas de esta entidad.
+        - `type_entitys`: dict, contiene todas las entidades del padre con su nombre como clave.
+
+        Métodos:
+        - `__init__(...)`: Inicializa una nueva entidad con los valores proporcionados. Añade la entidad al padre y a las listas/diccionarios globales.
+        - `Delect()`: Elimina la entidad de su padre y de las listas/diccionarios globales, eliminando también sus entidades hijas de forma recursiva.
+        - `Update(dt)`: Actualiza la posición, escala y rotación mundial de la entidad en función de su padre. Si tiene entidades hijas, también las actualiza y las ordena.
+        - `Draw()`: Dibuja la entidad y todas sus entidades hijas, si son visibles.
+    """
+
+    
+    
     def __init__(
         self, 
         parent,
