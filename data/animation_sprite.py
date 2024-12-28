@@ -5,11 +5,9 @@ from .entity import *
 
 class AnimationSprite(Entity) : 
     def __init__(
-        self, parent=None, name = "", position=Vector2(0,0), 
+        self, parent=None, name = "AnimationSprite", position=Vector2(0,0), 
         scale=Vector2(1,1), rotation = 0, origin=Vector2(0.5,0.5), color=WHITE, 
-        use_basis_model = False, texture="", 
-        use_basis_collider = True, use_repel_collider = False,
-        
+        texture="", 
         frame_per_second: int = 10,  # Valor predeterminado
         frame_start: int = 0,  # Valor inicial
         frame_end: int = 0,  # Valor final de los frames
@@ -21,8 +19,9 @@ class AnimationSprite(Entity) :
         imagens = [],
         
         ):
-        super().__init__(parent, name, position, scale, rotation, origin, color, use_basis_model, texture, use_basis_collider, use_repel_collider)
+        super().__init__(parent, name, position, scale, rotation, origin)
         
+        self.color = color
         self.type = "ANIMATION_SPRITE"
         self.texture_cords = texture_cords
         self.texture_size = texture_size
@@ -39,6 +38,7 @@ class AnimationSprite(Entity) :
                 self.imganes_list[i] = load_texture(img)
         self.textura_rectagle : Rectangle = Rectangle(0, 0, texture_size.x, texture_size.y)
         self.timer_animation : float = 0
+        self.texture = load_texture(texture) if texture != "" else None
         
     def Update(self, dt):
         
