@@ -34,6 +34,9 @@ class Game(Engine):
             if is_key_pressed(KEY_X) : 
                 self.player.Delect()
                 self.player = None
+                
+                
+                
 
             if is_key_pressed(KEY_SPACE) : self.player.position.y -= 500 * dt
 
