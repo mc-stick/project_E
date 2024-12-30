@@ -35,6 +35,7 @@ class ModelBasic(Entity):
         name = "Entity", 
         position=Vector2(), 
         scale=Vector2(1, 1), 
+        size = Vector2(100,100),
         rotation = 0, 
         origin=Vector2(0.5, 0.5), 
         color : Color = WHITE,
@@ -48,14 +49,15 @@ class ModelBasic(Entity):
         self.how_model = how_model
         self.dimension = dimension
         self.direction = direction
+        self.size = size
         
     def Draw(self):
         
         if self.how_model == "RECTANGLE" : 
             draw_rectangle_pro(
                 Rectangle(
-                    self.world_position.x, self.world_position.y, self.world_scale.x * 100, self.world_scale.y * 100
-                ), Vector2(self.origin.x * 100, self.origin.y * 100), self.world_rotation, self.color
+                    self.world_position.x, self.world_position.y, self.world_scale.x * self.size.x, self.world_scale.y * self.size.y
+                ), Vector2(self.origin.x * self.size.y, self.origin.y * self.size.y), self.world_rotation, self.color
             )
         elif self.how_model == "CIRCLE" : 
             draw_circle_v(

@@ -37,8 +37,14 @@ class AnimationSprite(Entity) :
     """
 
     def __init__(
-        self, parent=None, name = "AnimationSprite", position=Vector2(0,0), 
-        scale=Vector2(1,1), rotation = 0, origin=Vector2(0.5,0.5), color=WHITE, 
+        self, parent=None, 
+        name = "AnimationSprite", 
+        position=Vector2(0,0), 
+        scale=Vector2(1,1), 
+        size = Vector2(100, 100), 
+        rotation = 0, 
+        origin=Vector2(0.5,0.5), 
+        color=WHITE, 
         texture="", 
         frame_per_second: int = 10,  # Valor predeterminado
         frame_start: int = 0,  # Valor inicial
@@ -53,6 +59,7 @@ class AnimationSprite(Entity) :
         ):
         super().__init__(parent, name, position, scale, rotation, origin)
         
+        self.size = size
         self.color = color
         self.type = "ANIMATION_SPRITE"
         self.texture_cords = texture_cords
@@ -109,9 +116,9 @@ class AnimationSprite(Entity) :
                 draw_texture_pro(
                     frame_image,
                     Rectangle(self.texture_cords.x * self.texture_size.x, self.texture_cords.y * self.texture_size.y, frame_image.width, frame_image.height),
-                    Rectangle(self.world_position.x, self.world_position.y, self.scale.x * 100, self.scale.y * 100),
-                    self.origin,
-                    self.rotation,
+                    Rectangle(self.world_position.x, self.world_position.y, self.scale.x * self.size.x, self.scale.y * self.size.y),
+                    vector2_multiply(self.origin, self.size),
+                    self.world_rotation,
                     self.color
                 )
         
