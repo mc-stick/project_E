@@ -49,7 +49,7 @@ class Collider(Entity) :
         use_repel : bool = False,
         color : Color = BLUE,
         repel_power : Vector2 = Vector2(),
-        layer : int = 0
+        layer : list = {0}
         ):
         
         super().__init__(parent, name, position, scale, rotation, origin)
@@ -199,8 +199,9 @@ class Collider(Entity) :
     def GetCollider(self,) -> object:
         for entity in Colliders:
             entity :  Rectangle | Circle | Capsule
-            if entity.layer != self.layer : continue
+            if entity.layer in self.layer : continue
             if self == entity : continue
+            if entity.type == "RAYCAST" : continue
             
             # Detectar todas las combinaciones de colisionadores
             # Colisiones de BOX con otros tipos
@@ -283,19 +284,20 @@ class Raycast(Entity) :
     
     def __init__(
         self, parent, 
-        name = "Entity", 
+        name = "Raycast", 
         position=Vector2(), 
         scale=Vector2(1,1), 
         size = Vector2(100, 100),
         rotation = 0, 
         origin=Vector2(0,0), 
-        start_positoin = Vector2(), 
-        end_position = Vector2(),
-        layer : int = 0,
+        start_positoin = Vector2(0,0), 
+        end_position = Vector2(0,0),
+        layer : list = {0},
         use_basic_model = False,
         ):
         super().__init__(parent, name, position, scale, rotation, origin)
         
+        self.type = "RAYCAST"
         self.start_position = start_positoin
         self.end_position = end_position
         self.layer = layer
@@ -309,15 +311,13 @@ class Raycast(Entity) :
         if self in Colliders : 
             Colliders.remove(self)
     
-    def __set_point__(self, point : Vector2, use_rot = False) -> Vector2 : 
+    def __set_point__(self, point : Vector2) -> Vector2 : 
         world = vector2_subtract(self.world_position, vector2_multiply(self.origin, self.size))
         post = vector2_add(world, point)
-        if use_rot :
-            post = vector2_rotate(self.position, math.radians(self.world_rotation))
         return post
     
     def Collider(self) -> Vector2 :
-        return self.__set_point__(self.end_position, use_rot=True)
+        return self.__set_point__(self.end_position)
     
     def IsCollider(self) -> bool : 
         if self.GetCollider() : return True
@@ -326,8 +326,9 @@ class Raycast(Entity) :
     def GetCollider(self,) -> object:
         for entity in Colliders:
             entity :  Rectangle | Circle | Capsule
-            if entity.layer != self.layer : continue
+            if entity.layer in self.layer : continue
             if self == entity : continue
+            if entity.type == "RAYCAST" : continue
             
             # Detectar todas las combinaciones de colisionadores
             # Colisiones de BOX con otros tipos
@@ -336,7 +337,7 @@ class Raycast(Entity) :
                     return entity
             
             elif entity.how_collider == "CIRCLE":
-                if check_collision_point_circle(self.Collider(), entity.Collider()):
+                if check_collision_point_circle(self.Collider(), entity.Collider().position , entity.Collider().radius):
                     return entity
         return None
 
@@ -353,7 +354,7 @@ class Raycast(Entity) :
         if self.use_basic_model == True :
             
             start_pos = self.__set_point__(self.start_position)
-            end_pos = self.__set_point__(self.end_position, use_rot=True)
+            end_pos = self.__set_point__(self.end_position)
             draw_line_v(start_pos, end_pos, self.color)
             
             draw_circle_v(end_pos, 5, self.color)
