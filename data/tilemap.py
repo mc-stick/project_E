@@ -27,6 +27,8 @@ class TileMap(Entity) :
         }
         self.save_tile = {}
         
+        
+        
     def AddTile(self, tile_position : Vector2, texture_cords : Vector2):
         self.tile[f"({tile_position.x, tile_position.y})"] = {
             "tile_position" : Vector2(tile_position.x * self.tile_size.x, tile_position.y * self.tile_size.y) ,

@@ -32,7 +32,7 @@ class ModelBasic(Entity):
         
     def __init__(
         self, parent, 
-        name = "Entity", 
+        name = "ModelBasic", 
         position=Vector2(), 
         scale=Vector2(1, 1), 
         size = Vector2(100,100),
@@ -45,6 +45,7 @@ class ModelBasic(Entity):
         ):
         super().__init__(parent, name, position, scale, rotation, origin)
 
+        self.type = "MODELBASIC"
         self.color = color
         self.how_model = how_model
         self.dimension = dimension

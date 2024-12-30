@@ -17,6 +17,7 @@ class Game(Engine):
         self.Collider = Collider(parent=self.player, use_repel=True, use_basic_model=False, origin=Vector2(0, 0), repel_power=Vector2(200, 200), how_collider="CIRCLE")
         Collider(parent=self.scena, position=Vector2(400, 600), use_basic_model=True, size=Vector2(600, 50), color=RED, origin=Vector2(0.5, 0.5))
         
+        
     def Update(self, dt):
         
         if self.player : 
@@ -28,13 +29,14 @@ class Game(Engine):
             dir = vector2_normalize(dir)
             
             self.player.position.x += dir.x * 200 * dt
-            self.player.position.y += dir.y * 200 * dt
+            self.player.position.y += 1 * 200 * dt
         
             if is_key_pressed(KEY_X) : 
                 self.player.Delect()
                 self.player = None
 
-        if self.Collider.IsCollider() : print("ESTOY")
+            if is_key_pressed(KEY_SPACE) : self.player.position.y -= 500 * dt
+
         return super().Update(dt)
     
     def Draw(self):

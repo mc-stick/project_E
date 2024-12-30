@@ -14,6 +14,7 @@ class Collider(Entity) :
     - `position`: Vector2, posición central del colisionador.
     - `scale`: Vector2, escala del colisionador, que afecta su tamaño.
     - `rotation`: Ángulo de rotación en grados.
+    - `layer`: Int, capa en la que se encuentra el rayo, útil para filtrar colisiones.
     - `origin`: Punto de referencia para la posición del colisionador, generalmente el centro.
     - `use_basic_model`: Bool, indica si se usa el modelo base para el colisionador.
     - `how_collider`: Tipo de colisionador, puede ser "BOX", "CIRCLE"
@@ -171,8 +172,8 @@ class Collider(Entity) :
         scale_x = self.world_scale.x * self.size.x
         scale_y = self.world_scale.y * self.size.y
         
-        world_post = vector2_rotate(self.world_position, math.radians(self.world_rotation))
-        origin = vector2_rotate(self.origin, math.radians(self.world_rotation))
+        world_post = self.world_position
+        origin = self.origin
         
         position_x = world_post.x - (origin.x * self.size.x)
         position_y = world_post.y - (origin.y * self.size.y)
