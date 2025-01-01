@@ -48,8 +48,7 @@ class Collider(Entity) :
         how_collider : str = "BOX",
         use_repel : bool = False,
         color : Color = BLUE,
-        repel_power : Vector2 = Vector2(),
-        layer : list = {0},
+        layer : dict = {0},
         vector_distance_to_sort : Vector2 = Vector2(0,0),
         min_activation_distance : float = 0 ,
         ):
@@ -61,10 +60,11 @@ class Collider(Entity) :
         self.how_collider = how_collider
         self.use_repel = use_repel
         self.color = color
-        self.repel_power : Vector2 = repel_power
         self.layer = layer
         self.size = size
+        self.collision_range_to_use = 10
         
+    
         Colliders.append(self)
 
         
@@ -79,7 +79,8 @@ class Collider(Entity) :
         other_collider_type = other_obj.how_collider
 
         normal = Vector2(0, 0)
-
+        penetration_depth = 0
+        
         if self_collider_type == "BOX" and other_collider_type == "BOX":
             # Obtener los colliders de tipo "BOX"
             self_collider: Rectangle = self.Collider()
@@ -93,11 +94,13 @@ class Collider(Entity) :
 
             # Determinar la dirección de la repulsión
             if overlap_x < overlap_y:
+                penetration_depth = overlap_x
                 if self_collider.x + self_collider.width > other_collider.x + other_collider.width:
                     normal = Vector2(1, 0)  # Repulsión hacia la derecha
                 else:
                     normal = Vector2(-1, 0)  # Repulsión hacia la izquierda
             else:
+                penetration_depth = overlap_y
                 if self_collider.y + self_collider.height > other_collider.y + other_collider.height:
                     normal = Vector2(0, 1)   # Repulsión hacia arriba
                 else:
@@ -110,6 +113,8 @@ class Collider(Entity) :
 
             # Calcular la repulsión entre círculos
             dist = vector2_length(vector2_subtract(self_collider.position, other_collider.position))
+            penetration_depth = (self_collider.radius + other_collider.radius) - dist
+
             if dist < self_collider.radius + other_collider.radius:
                 # Calcular la dirección de la repulsión
                 normal = vector2_normalize(vector2_subtract(self_collider.position, other_collider.position))
@@ -122,7 +127,9 @@ class Collider(Entity) :
             # Obtener los puntos clave del rectángulo
             corners = other_obj.Get_Corners()
             closest_point = get_closest_point_to_rectangle(self_collider.position, other_collider)
-
+            dist = vector2_length(vector2_subtract(self_collider.position, closest_point))
+            penetration_depth = self_collider.radius - dist
+            
             # Calcular la dirección de la repulsión
             normal = vector2_normalize(vector2_subtract(self_collider.position, closest_point))
 
@@ -134,15 +141,17 @@ class Collider(Entity) :
             # Obtener los puntos clave del rectángulo
             corners = self.Get_Corners()
             closest_point = get_closest_point_to_rectangle(other_collider.position, self_collider)
-
+            dist = vector2_length(vector2_subtract(other_collider.position, closest_point))
+            penetration_depth = other_collider.radius - dist
+        
             # Calcular la dirección de la repulsión
             normal = vector2_normalize(vector2_subtract(other_collider.position, closest_point))
 
         # Aplicar la repulsión (ajustar magnitudes según sea necesario)
         
         
-        self_obj.position.x += normal.x * self.repel_power.x * dt
-        self_obj.position.y += normal.y * self.repel_power.y * dt
+        self_obj.position.x += normal.x * penetration_depth * (1/dt if dt != 0 else 0) * dt
+        self_obj.position.y += normal.y * penetration_depth * (1/dt if dt != 0 else 0) * dt
 
     
     def Get_Corners(self) -> list:
@@ -196,18 +205,21 @@ class Collider(Entity) :
     # Detectar el collider con las otras Entitys
     """
     def IsCollider(self) -> bool : 
+        if self.visible == False : return False
         if self.GetCollider() : return True
         return False
     
     def GetCollider(self,) -> object:
+        if self.visible == False : return
         self.distance_to_sort = vector2_distance(self.world_position, self.vector_distance_to_sort)
-        for entity in Colliders:
+        for i, entity in enumerate(Colliders):
             entity :  Rectangle | Circle | Capsule
             
-            if entity.layer in self.layer : continue
+            if self.layer in entity.layer: continue
             if self == entity : continue
             if entity.type == "RAYCAST" : continue
-            if self.distance_to_sort > self.min_activation_distance or self.min_activation_distance != 0 : continue
+            #if self.distance_to_sort > self.min_activation_distance or not self.min_activation_distance == 0 : continue
+            if entity.visible == False : continue
             
             # Detectar todas las combinaciones de colisionadores
             # Colisiones de BOX con otros tipos
@@ -231,6 +243,10 @@ class Collider(Entity) :
                     if check_collision_circle_rectangle(self.Collider(), entity.Collider()):
                         return entity
 
+            if self.collision_range_to_use != 0 :
+                if i > self.collision_range_to_use:
+                    break
+            
         return None
 
     
@@ -241,23 +257,30 @@ class Collider(Entity) :
     
     def Update(self, dt):
         
-        self.distance_to_sort = vector2_distance(self.world_position, self.vector_distance_to_sort)
-        if self.distance_to_sort < self.min_activation_distance or self.min_activation_distance == 0:
-            if self.use_repel :
-                e = self.GetCollider()
-                if e : 
-                    self.__repel__(e, dt) 
+        if self.visible :
+            self.distance_to_sort = vector2_distance(self.world_position, self.vector_distance_to_sort)
+            if self.distance_to_sort < self.min_activation_distance or self.min_activation_distance == 0:
+                if self.use_repel :
+                    e = self.GetCollider()
+                    if e is not None: 
+                        self.__repel__(e, dt) 
+                        
         return super().Update(dt)
     
     def Draw(self):
         
-        if self.use_basic_model == True :
+        if self.use_basic_model == True and self.visible:
             if self.distance_to_sort < self.min_activation_distance or self.min_activation_distance == 0 :
                 collider : Rectangle | Circle | Capsule = self.Collider()
                 if self.how_collider == "BOX" :
                     draw_rectangle_v(
                         Vector2(collider.x, collider.y), Vector2(collider.width, collider.height), self.color
                         ) 
+                    rect = Rectangle(collider.x, collider.y, collider.width, collider.height)
+                    #color : Color = Color(int(self.color.r*1.2), int(self.color.g*1.2), int(self.color.b*1.2), int(self.color.a*1.2))
+                    draw_rectangle_lines_ex(
+                        rect, 2, BLACK
+                    )
                 elif self.how_collider == "CIRCLE" : 
                     draw_circle_v(collider.position, collider.radius, self.color)
 
@@ -304,8 +327,10 @@ class Raycast(Entity) :
         end_position = Vector2(0,0),
         layer : list = {0},
         use_basic_model = False,
+        vector_distance_to_sort : Vector2 = Vector2(0,0),
+        min_activation_distance : float = 0 ,
         ):
-        super().__init__(parent, name, position, scale, rotation, origin)
+        super().__init__(parent, name, position, scale, rotation, origin,  vector_distance_to_sort, min_activation_distance)
         
         self.type = "RAYCAST"
         self.start_position = start_positoin
@@ -314,6 +339,7 @@ class Raycast(Entity) :
         self.use_basic_model = use_basic_model
         self.color = BLUE
         self.size = size
+        self.collision_range_to_use = 1
         Colliders.append(self)
         
     def Delect(self):
@@ -330,15 +356,20 @@ class Raycast(Entity) :
         return self.__set_point__(self.end_position)
     
     def IsCollider(self) -> bool : 
+        if self.visible == False : return False
         if self.GetCollider() : return True
         return False
     
-    def GetCollider(self,) -> object:
-        for entity in Colliders:
+    def GetCollider(self) -> object:
+        if self.visible == False : return None
+        
+        for i, entity in enumerate(Colliders):
             entity :  Rectangle | Circle | Capsule
-            if entity.layer in self.layer : continue
+            if self.layer in entity.layer : continue
+            if self.parent == entity: continue
             if self == entity : continue
             if entity.type == "RAYCAST" : continue
+            if entity.visible == False : continue
             
             # Detectar todas las combinaciones de colisionadores
             # Colisiones de BOX con otros tipos
@@ -349,24 +380,28 @@ class Raycast(Entity) :
             elif entity.how_collider == "CIRCLE":
                 if check_collision_point_circle(self.Collider(), entity.Collider().position , entity.Collider().radius):
                     return entity
+        
+            if range != 0 : 
+                if i > self.collision_range_to_use  : 
+                    break
         return None
 
     def Update(self, dt):
-        if self.use_basic_model == True : 
-            if self.IsCollider() == True:
-                self.color = RED
-            else:
-                self.color = BLUE
+        
         return super().Update(dt)
 
     def Draw(self):
         
         if self.use_basic_model == True :
-            
-            start_pos = self.__set_point__(self.start_position)
-            end_pos = self.__set_point__(self.end_position)
-            draw_line_v(start_pos, end_pos, self.color)
-            
-            draw_circle_v(end_pos, 5, self.color)
+            if self.distance_to_sort < self.min_activation_distance or self.min_activation_distance == 0:
+                if self.IsCollider() == True:
+                    self.color = RED
+                else:
+                    self.color = BLUE
+                start_pos = self.__set_point__(self.start_position)
+                end_pos = self.__set_point__(self.end_position)
+                draw_line_v(start_pos, end_pos, self.color)
+                
+                draw_circle_v(end_pos, 5, self.color)
         
         return super().Draw()

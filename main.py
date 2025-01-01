@@ -12,35 +12,44 @@ class Game(Engine):
         self.scena = Scena("Cartas")
         self.scena.use_y_index = False
         
-
-        self.model = ModelBasic(parent=self.scena)
-        self.camera.zoom = 0.5
-        self.grip = TileMap(parent=self.scena, texture="grass.png", tile_size=Vector2(8, 8), min_activation_distance=500, use_basic_model_to_collider=False)
-        self.grip.scale = Vector2(4, 4)
-        for x in range(-40, 40) : 
-            for y in range(-40, 40) :  
+        self.body = Body(parent=self.scena, friction=0.2, position=Vector2(0, 0))
+        self.model = Collider(parent=self.body, use_basic_model=True, color=WHITE, use_repel=True, layer={1}, origin=Vector2(0, 0))
+        self.model.collision_range_to_use = 10
+        self.rays = [
+            Raycast(parent=self.model, end_position=Vector2(0, 101), start_positoin=Vector2(0, 50), use_basic_model=True, layer={5}, origin=Vector2(0, 0)),
+            Raycast(parent=self.model, end_position=Vector2(50, 101), start_positoin=Vector2(50, 50), use_basic_model=True, layer={5}, origin=Vector2(0, 0)),
+            Raycast(parent=self.model, end_position=Vector2(100, 101), start_positoin=Vector2(100, 50), use_basic_model=True, layer={5}, origin=Vector2(0, 0))
+            ]
+        self.camera.zoom = 0.3
+        self.grip = TileMap(parent=self.scena, texture="grass.png", tile_size=Vector2(8, 8), min_activation_distance=2000, use_basic_model_to_collider=True, use_collider=True, layer_collider={1, 5})
+        self.grip.min_activation_distance_to_collider = 500
+        self.grip.scale = Vector2(10, 10)
+        for x in range(-50, 50) : 
+            for y in range(10, 30) :  
                 self.grip.AddTile(Vector2(x, y), Vector2(0, 0))
-        print(Colliders)
-        for x in range(-40, 40) : 
-            for y in range(-40, 40) :  
-                self.grip.RemoveTile(Vector2(x, y))
-        print(Colliders)
+        
+        #Collider(parent=self.scena, position=Vector2(400, 400), use_basic_model=True)
     def Update(self, dt):
-
 
         dir = Vector2(
             int(is_key_down(KEY_D)) - int(is_key_down(KEY_A)),
             int(is_key_down(KEY_S)) - int(is_key_down(KEY_W))
         )
         dir = vector2_normalize(dir)
+        ray = False
+        for r in self.rays : ray = r.IsCollider()
+        self.body.ReloadVelocity()
+        self.body.velocity.x += dir.x * 200
         
-        self.camera.target.x += dir.x * 400 * dt
-        self.camera.target.y += dir.y * 400 * dt
+        if ray == False : self.body.velocity.y += 650
+        if ray == True and is_key_pressed(KEY_SPACE):
+            self.body.velocity.y -= 1000 * 10
+        self.camera.target = vector2_lerp(self.camera.target, self.body.world_position, 0.2)
         
+        self.body.MoveVelocity(dt)
+
         
-        self.model.position = self.Get_Global_Mouse_Position(self.camera)
-        self.grip.vector_distance_to_sort = self.model.position
-        print(self.model.position.x, self.model.position.y)
+        self.grip.vector_distance_to_sort = self.body.world_position
         
         return super().Update(dt)
     

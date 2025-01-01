@@ -20,7 +20,8 @@ class TileMap(Entity) :
         vector_distance_to_sort : Vector2 = Vector2(0,0),
         min_activation_distance : float = 0 ,
         use_basic_model_to_collider = False, 
-        
+        layer_collider = {0},
+        min_activation_distance_to_collider : float = 0
         ):
         super().__init__(parent, name, position, scale, rotation, origin, vector_distance_to_sort, min_activation_distance)
         
@@ -35,7 +36,8 @@ class TileMap(Entity) :
         self.min_activation_distance : float = min_activation_distance
         self.use_basic_model_to_collider = use_basic_model_to_collider
         self.use_collider = use_collider
-        
+        self.layer_collider  = layer_collider 
+        self.min_activation_distance_to_collider = min_activation_distance_to_collider or min_activation_distance
         
     def AddTile(self, tile_position : Vector2, texture_cords : Vector2):
         
@@ -51,7 +53,7 @@ class TileMap(Entity) :
                     parent=self.parent, name="slopt", position=position, 
                     use_basic_model=self.use_basic_model_to_collider, 
                     size=Vector2((self.scale.x * self.tile_size.x), (self.scale.y * self.tile_size.y)),
-                    min_activation_distance=self.min_activation_distance
+                    min_activation_distance=self.min_activation_distance_to_collider, layer=self.layer_collider, origin= Vector2(0,0)
                     )
                 } 
         else:
