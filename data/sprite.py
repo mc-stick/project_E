@@ -40,9 +40,11 @@ class Sprite(Entity) :
         use_cords_and_size : bool = True,
         texture_cords : Vector2 = Vector2(0,0),
         texture_size : Vector2 = Vector2(0,0),
+        vector_distance_to_sort = Vector2(), 
+        min_activation_distance = 0
         
         ):
-        super().__init__(parent, name, position, scale, rotation, origin)
+        super().__init__(parent, name, position, scale, rotation, origin,  vector_distance_to_sort, min_activation_distance)
         
         self.size = size
         self.color = color
@@ -53,19 +55,21 @@ class Sprite(Entity) :
         self.use_cords_and_size = use_cords_and_size
         
     def Draw(self):
- 
-        if self.texture :
-            # Dibuja la imagen con las coordenadas y el tamaño correcto
-            if self.use_cords_and_size == True :
-                rect = Rectangle(self.texture_cords.x * self.texture_size.x, self.texture_cords.y * self.texture_size.y, self.texture_size.x, self.texture_size.y)
-            else:
-                rect = Rectangle(0, 0, self.texture.width, self.texture.height)
-            
-            draw_texture_pro(
-                self.texture,
-                rect,
-                Rectangle(self.world_position.x, self.world_position.y, self.scale.x * self.size.x, self.scale.y * self.size.y),
-                vector2_multiply(self.origin, self.size),
-                self.world_rotation,
-                self.color
-            )
+        self.distance_to_sort = vector2_distance(self.world_position, self.vector_distance_to_sort)
+        if self.distance_to_sort < self.min_activation_distance or self.min_activation_distance == 0:
+            if self.texture :
+                # Dibuja la imagen con las coordenadas y el tamaño correcto
+                if self.use_cords_and_size == True :
+                    rect = Rectangle(self.texture_cords.x * self.texture_size.x, self.texture_cords.y * self.texture_size.y, self.texture_size.x, self.texture_size.y)
+                else:
+                    rect = Rectangle(0, 0, self.texture.width, self.texture.height)
+                
+                draw_texture_pro(
+                    self.texture,
+                    rect,
+                    Rectangle(self.world_position.x, self.world_position.y, self.scale.x * self.size.x, self.scale.y * self.size.y),
+                    vector2_multiply(self.origin, self.size),
+                    self.world_rotation,
+                    self.color
+                )
+        return super().Draw(self)

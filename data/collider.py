@@ -49,10 +49,12 @@ class Collider(Entity) :
         use_repel : bool = False,
         color : Color = BLUE,
         repel_power : Vector2 = Vector2(),
-        layer : list = {0}
+        layer : list = {0},
+        vector_distance_to_sort : Vector2 = Vector2(0,0),
+        min_activation_distance : float = 0 ,
         ):
         
-        super().__init__(parent, name, position, scale, rotation, origin)
+        super().__init__(parent, name, position, scale, rotation, origin, vector_distance_to_sort, min_activation_distance)
 
         self.type = "COLLIDER"
         self.use_basic_model = use_basic_model
@@ -62,6 +64,7 @@ class Collider(Entity) :
         self.repel_power : Vector2 = repel_power
         self.layer = layer
         self.size = size
+        
         Colliders.append(self)
 
         
@@ -197,11 +200,14 @@ class Collider(Entity) :
         return False
     
     def GetCollider(self,) -> object:
+        self.distance_to_sort = vector2_distance(self.world_position, self.vector_distance_to_sort)
         for entity in Colliders:
             entity :  Rectangle | Circle | Capsule
+            
             if entity.layer in self.layer : continue
             if self == entity : continue
             if entity.type == "RAYCAST" : continue
+            if self.distance_to_sort > self.min_activation_distance or self.min_activation_distance != 0 : continue
             
             # Detectar todas las combinaciones de colisionadores
             # Colisiones de BOX con otros tipos
@@ -209,6 +215,7 @@ class Collider(Entity) :
                 if entity.how_collider == "BOX":
                     if check_collision_recs(self.Collider(), entity.Collider()):
                         return entity
+                        
                 
                 elif entity.how_collider == "CIRCLE":
                     if check_collision_circle_rectangle(entity.Collider(), self.Collider()):
@@ -234,22 +241,25 @@ class Collider(Entity) :
     
     def Update(self, dt):
         
-        if self.use_repel :
-            e = self.GetCollider()
-            if e : 
-                self.__repel__(e, dt) 
+        self.distance_to_sort = vector2_distance(self.world_position, self.vector_distance_to_sort)
+        if self.distance_to_sort < self.min_activation_distance or self.min_activation_distance == 0:
+            if self.use_repel :
+                e = self.GetCollider()
+                if e : 
+                    self.__repel__(e, dt) 
         return super().Update(dt)
     
     def Draw(self):
         
         if self.use_basic_model == True :
-            collider : Rectangle | Circle | Capsule = self.Collider()
-            if self.how_collider == "BOX" :
-                draw_rectangle_v(
-                    Vector2(collider.x, collider.y), Vector2(collider.width, collider.height), self.color
-                    ) 
-            elif self.how_collider == "CIRCLE" : 
-                draw_circle_v(collider.position, collider.radius, self.color)
+            if self.distance_to_sort < self.min_activation_distance or self.min_activation_distance == 0 :
+                collider : Rectangle | Circle | Capsule = self.Collider()
+                if self.how_collider == "BOX" :
+                    draw_rectangle_v(
+                        Vector2(collider.x, collider.y), Vector2(collider.width, collider.height), self.color
+                        ) 
+                elif self.how_collider == "CIRCLE" : 
+                    draw_circle_v(collider.position, collider.radius, self.color)
 
         
         super().Draw()

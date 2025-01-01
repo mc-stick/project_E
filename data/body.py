@@ -14,9 +14,11 @@ class Body(Entity):
         rotation=0, 
         origin=Vector2(0.5, 0.5),
         friction = 0,
+        vector_distance_to_sort = Vector2(), 
+        min_activation_distance = 0
         ):
         # Llamada al constructor de la clase base (Entity)
-        super().__init__(parent, name, position, scale, rotation, origin)
+        super().__init__(parent, name, position, scale, rotation, origin, vector_distance_to_sort, min_activation_distance)
         
         self.type = "BODY"
         self.velocity: Vector2 = Vector2()  # Inicializa la velocidad a (0,0)

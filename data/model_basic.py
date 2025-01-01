@@ -42,8 +42,10 @@ class ModelBasic(Entity):
         how_model : str = "RECTANGLE",
         dimension: float = 0, 
         direction: str = "VERTICAL",
+        vector_distance_to_sort = Vector2(), 
+        min_activation_distance = 0
         ):
-        super().__init__(parent, name, position, scale, rotation, origin)
+        super().__init__(parent, name, position, scale, rotation, origin, vector_distance_to_sort, min_activation_distance)
 
         self.type = "MODELBASIC"
         self.color = color
@@ -53,21 +55,22 @@ class ModelBasic(Entity):
         self.size = size
         
     def Draw(self):
-        
-        if self.how_model == "RECTANGLE" : 
-            draw_rectangle_pro(
-                Rectangle(
-                    self.world_position.x, self.world_position.y, self.world_scale.x * self.size.x, self.world_scale.y * self.size.y
-                ), Vector2(self.origin.x * self.size.y, self.origin.y * self.size.y), self.world_rotation, self.color
-            )
-        elif self.how_model == "CIRCLE" : 
-            draw_circle_v(
-                self.world_position, (self.world_scale.x + self.world_scale.y)/2, self.color
-            )
-        elif self.how_model == "CAPSULE" : 
-            draw_capsule_2d(
-                Capsule(self.world_position, (self.world_scale.x+self.world_scale.y)/2, dimension=self.dimension), self.color
-            )
+        self.distance_to_sort = vector2_distance(self.world_position, self.vector_distance_to_sort)
+        if self.distance_to_sort < self.min_activation_distance or self.min_activation_distance == 0:
+            if self.how_model == "RECTANGLE" : 
+                draw_rectangle_pro(
+                    Rectangle(
+                        self.world_position.x, self.world_position.y, self.world_scale.x * self.size.x, self.world_scale.y * self.size.y
+                    ), Vector2(self.origin.x * self.size.y, self.origin.y * self.size.y), self.world_rotation, self.color
+                )
+            elif self.how_model == "CIRCLE" : 
+                draw_circle_v(
+                    self.world_position, (self.world_scale.x + self.world_scale.y)/2, self.color
+                )
+            elif self.how_model == "CAPSULE" : 
+                draw_capsule_2d(
+                    Capsule(self.world_position, (self.world_scale.x+self.world_scale.y)/2, dimension=self.dimension), self.color
+                )
         
         return super().Draw()
     

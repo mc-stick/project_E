@@ -46,6 +46,8 @@ class AnimationSprite(Entity) :
         origin=Vector2(0.5,0.5), 
         color=WHITE, 
         texture="", 
+        vector_distance_to_sort = Vector2(), 
+        min_activation_distance = 0,
         frame_per_second: int = 10,  # Valor predeterminado
         frame_start: int = 0,  # Valor inicial
         frame_end: int = 0,  # Valor final de los frames
@@ -57,7 +59,7 @@ class AnimationSprite(Entity) :
         imagens = [],
         
         ):
-        super().__init__(parent, name, position, scale, rotation, origin)
+        super().__init__(parent, name, position, scale, rotation, origin, vector_distance_to_sort, min_activation_distance)
         
         self.size = size
         self.color = color
@@ -80,45 +82,47 @@ class AnimationSprite(Entity) :
         self.texture = load_texture(texture) if texture != "" else None
         
     def Update(self, dt):
-        
-        self.timer_animation += dt
-        if self.timer_animation >= 1.0 / self.frame_per_second:
-            self.frame_select += 1
-            self.timer_animation = 0
-            
-        if self.frame_select >= self.frame_end: 
-            self.frame_select = self.frame_start
-  
-        if self.use_with_imagens == False :
-            self.textura_rectagle.x = (self.frame_select * self.texture_size.x) * self.direction_to_animate.x
-            self.textura_rectagle.y = (self.frame_select * self.texture_size.y) * self.direction_to_animate.y
+        self.distance_to_sort = vector2_distance(self.world_position, self.vector_distance_to_sort)
+        if self.distance_to_sort < self.min_activation_distance or self.min_activation_distance == 0:
+            self.timer_animation += dt
+            if self.timer_animation >= 1.0 / self.frame_per_second:
+                self.frame_select += 1
+                self.timer_animation = 0
+                
+            if self.frame_select >= self.frame_end: 
+                self.frame_select = self.frame_start
+    
+            if self.use_with_imagens == False :
+                self.textura_rectagle.x = (self.frame_select * self.texture_size.x) * self.direction_to_animate.x
+                self.textura_rectagle.y = (self.frame_select * self.texture_size.y) * self.direction_to_animate.y
             
         return super().Update(dt)
 
     def Draw(self):
-        
-        if self.use_with_imagens == False :
-            if self.texture :
-                draw_texture_pro(
-                    self.texture,
-                    self.textura_rectagle,
-                    Rectangle(self.world_position.x, self.world_position.y, self.scale.x * 100, self.scale.y * 100),
-                    self.origin, 
-                    self.rotation,
-                    self.color
-                )
-        else:
-            if self.imganes_list : 
-                # Asegúrate de que frame_select esté dentro de los límites
-                frame_image = self.imganes_list[self.frame_select % len(self.imganes_list)]
-                
-                # Dibuja la imagen con las coordenadas y el tamaño correcto
-                draw_texture_pro(
-                    frame_image,
-                    Rectangle(self.texture_cords.x * self.texture_size.x, self.texture_cords.y * self.texture_size.y, frame_image.width, frame_image.height),
-                    Rectangle(self.world_position.x, self.world_position.y, self.scale.x * self.size.x, self.scale.y * self.size.y),
-                    vector2_multiply(self.origin, self.size),
-                    self.world_rotation,
-                    self.color
-                )
-        
+        self.distance_to_sort = vector2_distance(self.world_position, self.vector_distance_to_sort)
+        if self.distance_to_sort < self.min_activation_distance or self.min_activation_distance == 0:
+            if self.use_with_imagens == False :
+                if self.texture :
+                    draw_texture_pro(
+                        self.texture,
+                        self.textura_rectagle,
+                        Rectangle(self.world_position.x, self.world_position.y, self.scale.x * 100, self.scale.y * 100),
+                        self.origin, 
+                        self.rotation,
+                        self.color
+                    )
+            else:
+                if self.imganes_list : 
+                    # Asegúrate de que frame_select esté dentro de los límites
+                    frame_image = self.imganes_list[self.frame_select % len(self.imganes_list)]
+                    
+                    # Dibuja la imagen con las coordenadas y el tamaño correcto
+                    draw_texture_pro(
+                        frame_image,
+                        Rectangle(self.texture_cords.x * self.texture_size.x, self.texture_cords.y * self.texture_size.y, frame_image.width, frame_image.height),
+                        Rectangle(self.world_position.x, self.world_position.y, self.scale.x * self.size.x, self.scale.y * self.size.y),
+                        vector2_multiply(self.origin, self.size),
+                        self.world_rotation,
+                        self.color
+                    )
+        return super().Draw(self)

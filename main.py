@@ -12,44 +12,41 @@ class Game(Engine):
         self.scena = Scena("Cartas")
         self.scena.use_y_index = False
         
-        
-        self.player = Body(parent=self.scena, position=Vector2(400, 400), friction=0.2, scale=Vector2(1, 1))
-        self.raycast = Raycast(parent=self.player, end_position=Vector2(0, 70), start_positoin=Vector2(0, 0), use_basic_model=True, layer={1})
-        self.Collider = Collider(parent=self.player, use_repel=True, use_basic_model=True, origin=Vector2(0, 0), repel_power=Vector2(300, 300), how_collider="CIRCLE", layer={0})
-        Collider(parent=self.scena, position=Vector2(400, 600), use_basic_model=True, size=Vector2(600, 50), color=RED, origin=Vector2(0.5, 0.5), layer={1, 0})
-        
-        
+
+        self.model = ModelBasic(parent=self.scena)
+        self.camera.zoom = 0.5
+        self.grip = TileMap(parent=self.scena, texture="grass.png", tile_size=Vector2(8, 8), min_activation_distance=500, use_basic_model_to_collider=False)
+        self.grip.scale = Vector2(4, 4)
+        for x in range(-40, 40) : 
+            for y in range(-40, 40) :  
+                self.grip.AddTile(Vector2(x, y), Vector2(0, 0))
+        print(Colliders)
+        for x in range(-40, 40) : 
+            for y in range(-40, 40) :  
+                self.grip.RemoveTile(Vector2(x, y))
+        print(Colliders)
     def Update(self, dt):
+
+
+        dir = Vector2(
+            int(is_key_down(KEY_D)) - int(is_key_down(KEY_A)),
+            int(is_key_down(KEY_S)) - int(is_key_down(KEY_W))
+        )
+        dir = vector2_normalize(dir)
         
-        if self.player : 
-            dir = Vector2(
-                int(is_key_down(KEY_D)) - int(is_key_down(KEY_A)), 
-                int(is_key_down(KEY_S)) - int(is_key_down(KEY_W)), 
-            )
-            
-            dir = vector2_normalize(dir)
-            
-            self.player.ReloadVelocity()
-            self.player.velocity.x += dir.x * 20
-            if is_key_pressed(KEY_SPACE) and self.raycast.IsCollider() : 
-                self.player.velocity.y -= 1000 * 4
-            if self.raycast.IsCollider() == False : 
-                self.player.velocity.y += 1 * 200
-            self.player.MoveVelocity(dt)
+        self.camera.target.x += dir.x * 400 * dt
+        self.camera.target.y += dir.y * 400 * dt
         
-            if is_key_pressed(KEY_X) : 
-                self.player.Delect()
-                self.player = None
-
-
-            
-
+        
+        self.model.position = self.Get_Global_Mouse_Position(self.camera)
+        self.grip.vector_distance_to_sort = self.model.position
+        print(self.model.position.x, self.model.position.y)
         
         return super().Update(dt)
     
     def Draw(self):
 
-    
+
         return super().Draw()
     
     def Interface(self):
@@ -57,5 +54,5 @@ class Game(Engine):
         return super().Interface()
     
     
-app = Game(window_size_x=800, window_size_y=800, name="Hola Mundo", use_y_index=True)
+app = Game(window_size_x=960, window_size_y=540, name="Hola Mundo", use_y_index=True)
 app.Run()

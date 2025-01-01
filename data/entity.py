@@ -41,7 +41,9 @@ class Entity(Scena):
         position=Vector2(0, 0),
         scale=Vector2(1, 1),  
         rotation: float = 0,
-        origin=Vector2(0.5, 0.5),        
+        origin=Vector2(0.5, 0.5),
+        vector_distance_to_sort : Vector2 = Vector2(0,0),
+        min_activation_distance : float = 0 ,        
     ):
         self.parent = parent
         self.name = name if name in self.parent.type_entitys else name + f".{len(self.parent.entitys)+1:003}"
@@ -69,6 +71,10 @@ class Entity(Scena):
         self.entitys = []
         self.type_entitys = {}
         
+        self.vector_distance_to_sort : Vector2 = vector_distance_to_sort
+        self.min_activation_distance : float = min_activation_distance
+        self.distance_to_sort : float = 0
+        
         self.parent.entitys.append(self)
         self.parent.type_entitys[self.name] = self
         Type_Entitys[self.name] = self
@@ -92,37 +98,41 @@ class Entity(Scena):
             Type_Entitys.pop(self.name)
             
     def Update(self, dt):
-        if self.parent and self.parent.type != "SCENA":
-            # 1. Obtener las propiedades del padre (posición y rotación mundial)
-            parent_position = self.parent.world_position
-            parent_rotation = self.parent.world_rotation
-            parent_scale = self.parent.world_scale
-
-            # 2. Rotar la posición local del hijo alrededor del origen del padre según la rotación del padre
-            rotated_position = vector2_rotate(self.position, math.radians(parent_rotation))  # Rotación correcta respecto al origen del padre
-
-            # 3. Ajustar la posición mundial del hijo con respecto al padre
-            self.world_position.x = parent_position.x + rotated_position.x * parent_scale.x
-            self.world_position.y = parent_position.y + rotated_position.y * parent_scale.y
-            
-             # 4. Controlar la velocidad de la rotación (ajustar factor para desacelerar la rotación)
-            self.world_rotation = parent_rotation+self.rotation
-
-            # 5. Escala acumulada entre la escala del padre y la del hijo
-            self.world_scale.x = parent_scale.x * self.scale.x
-            self.world_scale.y = parent_scale.y * self.scale.y
-        else:
-            # Si no tiene padre, la posición mundial es la misma que la local
-            self.world_position = self.position
-            self.world_rotation = self.rotation
-            self.world_scale = self.scale
         
-        self.y_index = self.world_position.y
+        self.distance_to_sort = vector2_distance(self.world_position, self.vector_distance_to_sort)
+        if self.distance_to_sort < self.min_activation_distance or self.min_activation_distance == 0:
+        
+            if self.parent and self.parent.type != "SCENA":
+                # 1. Obtener las propiedades del padre (posición y rotación mundial)
+                parent_position = self.parent.world_position
+                parent_rotation = self.parent.world_rotation
+                parent_scale = self.parent.world_scale
 
-        if self.entitys :
-            for e in self.entitys : e.Update(dt)
-            if self.use_y_index : self.entitys.sort(key=lambda e: e.y_index)
-            else : self.entitys.sort(key=lambda e: e.index)
+                # 2. Rotar la posición local del hijo alrededor del origen del padre según la rotación del padre
+                rotated_position = vector2_rotate(self.position, math.radians(parent_rotation))  # Rotación correcta respecto al origen del padre
+
+                # 3. Ajustar la posición mundial del hijo con respecto al padre
+                self.world_position.x = parent_position.x + rotated_position.x * parent_scale.x
+                self.world_position.y = parent_position.y + rotated_position.y * parent_scale.y
+                
+                # 4. Controlar la velocidad de la rotación (ajustar factor para desacelerar la rotación)
+                self.world_rotation = parent_rotation+self.rotation
+
+                # 5. Escala acumulada entre la escala del padre y la del hijo
+                self.world_scale.x = parent_scale.x * self.scale.x
+                self.world_scale.y = parent_scale.y * self.scale.y
+            else:
+                # Si no tiene padre, la posición mundial es la misma que la local
+                self.world_position = self.position
+                self.world_rotation = self.rotation
+                self.world_scale = self.scale
+            
+            self.y_index = self.world_position.y
+
+            if self.entitys :
+                for e in self.entitys : e.Update(dt)
+                if self.use_y_index : self.entitys.sort(key=lambda e: e.y_index)
+                else : self.entitys.sort(key=lambda e: e.index)
         
     def Draw(self):
         
@@ -130,10 +140,13 @@ class Entity(Scena):
         # Normalize the scale by multiplying by 100
         normalized_scale = Vector2(self.world_scale.x * 100, self.world_scale.y * 100)
         """
-        if self.entitys :
-            for e in self.entitys : 
-                if e.visible == True :
-                    e.Draw()
+        self.distance_to_sort = vector2_distance(self.world_position, self.vector_distance_to_sort)
+        if self.distance_to_sort < self.min_activation_distance or self.min_activation_distance == 0:
+            
+            if self.entitys :
+                for e in self.entitys : 
+                    if e.visible == True :
+                        e.Draw()
                 
         
 

@@ -43,8 +43,10 @@ class Engine:
         direction = Vector2(target_position.x - point.x, target_position.y - point.y)
         return math.atan2(direction.y, direction.x)
     
-    def Get_Global_Mouse_Position(self, camera) -> Vector2:
+    def Get_Global_Mouse_Position(self, camera : Camera2D) -> Vector2:
         return get_screen_to_world_2d(get_mouse_position(), camera)
+        
+    
     
     # Borrar las Scenas
     def Remove_Scenas(self, scena):
@@ -56,7 +58,8 @@ class Engine:
         global Scenas
         Scenas = dict(sorted(Scenas.items(), key=lambda item: item[1].index))
         for s in Scenas.values() : s.Update(dt)
-        
+        if Colliders : 
+            Colliders.sort(key=lambda c: c.distance_to_sort)
         
     def Draw(self):
         for s in Scenas.values() : 
