@@ -67,6 +67,10 @@ class Engine:
                 s.Draw()
         
     def Interface(self):
+        for s in Scenas.values() : 
+            if s.visible == True :
+                s.Interface()
+        
         pass
         
     def Run(self):

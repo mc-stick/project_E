@@ -64,4 +64,8 @@ class Scena:
             if e.visible == True :
                 e.Draw()
             
-        
+
+    def Interface(self):
+        for e in self.entitys : 
+            if e.visible == True :
+                e.Interface()

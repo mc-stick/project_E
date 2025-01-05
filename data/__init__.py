@@ -12,4 +12,6 @@ from .tilemap import *
 
 from .model_basic import *
 
+from .button import *
+
 from .collider import *

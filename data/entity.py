@@ -23,6 +23,8 @@ class Entity(Scena):
         - `use_y_index`: bool, indica si ordenar las entidades por el eje Y.
         - `visible`: bool, determina si la entidad es visible o no.
         - `entitys`: lista, contiene todas las entidades hijas de esta entidad.
+        - `vector_distance_to_sort` : Vector2, vector de distancia para ordenar las entidades.
+        - `min_activation_distance` : float, distancia mínima para activar la entidad.
         - `type_entitys`: dict, contiene todas las entidades del padre con su nombre como clave.
 
         Métodos:
@@ -148,6 +150,7 @@ class Entity(Scena):
                     if e.visible == True :
                         e.Draw()
                 
-        
+    def Interface(self):
+        return super().Interface()
 
         

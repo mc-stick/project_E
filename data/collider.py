@@ -17,10 +17,11 @@ class Collider(Entity) :
     - `layer`: Int, capa en la que se encuentra el rayo, útil para filtrar colisiones.
     - `origin`: Punto de referencia para la posición del colisionador, generalmente el centro.
     - `use_basic_model`: Bool, indica si se usa el modelo base para el colisionador.
-    - `how_collider`: Tipo de colisionador, puede ser "BOX", "CIRCLE"
+    - `how_collider`: Tipo de colisionador, puede ser "BOX", "CIRCLE", "ROT_BOX".
     - `dimension`: Longitud del cuerpo de la cápsula, relevante solo para cápsulas.
     - `direction`: Dirección de la cápsula, "VERTICAL" o "HORIZONTAL".
-    - `use_repel`: Bool, indica si se debe aplicar repulsión entre colisionadores.
+    - `vector_distance_to_sort` : Vector2, vector de distancia para ordenar las entidades.
+    - `min_activation_distance` : float, distancia mínima para activar la entidad.
     - `color`: Color del colisionador para su representación visual.
 
     Métodos:
@@ -43,7 +44,7 @@ class Collider(Entity) :
         scale=Vector2(1, 1), 
         size=Vector2(100, 100),
         rotation = 0, 
-        origin=Vector2(0.2), 
+        origin=Vector2(0.5,0.5), 
         use_basic_model = False, 
         how_collider : str = "BOX",
         use_repel : bool = False,
@@ -80,6 +81,35 @@ class Collider(Entity) :
 
         normal = Vector2(0, 0)
         penetration_depth = 0
+        
+        def dot_product(v1, v2):
+                """ Calcula el producto punto de dos vectores. """
+                return v1.x * v2.x + v1.y * v2.y
+
+        # Función para proyectar un polígono en un eje
+        def project_polygon(polygon: RectanglePolygon, axis: Vector2):
+            min_proj = float('inf')
+            max_proj = float('-inf')
+            
+            # Proyectar todos los vértices del polígono en el eje dado
+            for vertex in [polygon.v1, polygon.v2, polygon.v3, polygon.v4]:
+                projection = dot_product(vertex, axis)  # Producto escalar para proyección
+                min_proj = min(min_proj, projection)
+                max_proj = max(max_proj, projection)
+            return min_proj, max_proj
+        
+        # Función para verificar si hay superposición entre proyecciones
+        def overlap_on_axis(polygon1: RectanglePolygon, polygon2: RectanglePolygon, axis: Vector2):
+            min1, max1 = project_polygon(polygon1, axis)
+            min2, max2 = project_polygon(polygon2, axis)
+            
+            # Verificar si hay una superposición
+            if max1 < min2 or max2 < min1:
+                return False, 0  # No hay colisión
+            overlap = min(max1, max2) - max(min1, min2)  # Calcular superposición
+            return True, overlap
+        
+        
         
         if self_collider_type == "BOX" and other_collider_type == "BOX":
             # Obtener los colliders de tipo "BOX"
@@ -147,6 +177,128 @@ class Collider(Entity) :
             # Calcular la dirección de la repulsión
             normal = vector2_normalize(vector2_subtract(other_collider.position, closest_point))
 
+        
+
+        elif self_collider_type == "ROT_BOX" and other_collider_type == "ROT_BOX":
+            # Obtener los colliders de tipo "ROT_BOX"
+            self_collider: RectanglePolygon = self.Collider()
+            other_collider: RectanglePolygon = other_obj.Collider()
+
+
+
+            # Crear una lista de todos los ejes (normales a los lados de los rectángulos)
+            axes = [
+                
+                vector2_normalize(vector2_subtract(self_collider.v2, self_collider.v1)),
+                vector2_normalize(vector2_subtract(self_collider.v3 , self_collider.v2)),
+                vector2_normalize(vector2_subtract(other_collider.v2 , other_collider.v1)),
+                vector2_normalize(vector2_subtract(other_collider.v3 , other_collider.v2))
+
+            ]
+
+            # Inicializar la menor penetración y el eje de colisión
+            min_overlap = float('inf')
+            collision_normal = None
+
+            # Verificar colisiones en todos los ejes
+            for axis in axes:
+                collision, overlap = overlap_on_axis(self_collider, other_collider, axis)
+                if not collision:
+                    # Si no hay colisión en uno de los ejes, no hay colisión en absoluto
+                    return False
+                
+                # Encontrar el eje con la menor superposición (penetración mínima)
+                if overlap < min_overlap:
+                    min_overlap = overlap
+                    collision_normal = axis
+
+            # Determinar la dirección de la repulsión
+            penetration_depth = min_overlap
+            normal = collision_normal
+
+            # Ajustar la dirección de la normal si es necesario
+            center_self = vector2_subtract(vector2_add(vector2_add(self_collider.v1, self_collider.v2 ), vector2_add(self_collider.v3, self_collider.v4)), Vector2(4, 4))
+            center_other = vector2_subtract(vector2_add(vector2_add(other_collider.v1, other_collider.v2 ), vector2_add(other_collider.v3, other_collider.v4)), Vector2(4, 4))
+            direction = vector2_normalize(vector2_subtract(center_other, center_self))
+            
+        elif self_collider_type == "ROT_BOX" and other_collider_type == "BOX":
+            # Obtener los colliders de tipo "ROT_BOX" y "BOX"
+            self_collider: RectanglePolygon = self.Collider()
+            other_collider: Rectangle = other_obj.Collider()
+
+            # Convertir el BOX en un RectanglePolygon para usar el mismo sistema de ejes y proyección
+            other_polygon = RectanglePolygon(
+                Vector2(other_collider.x, other_collider.y),
+                Vector2(other_collider.x + other_collider.width, other_collider.y),
+                Vector2(other_collider.x + other_collider.width, other_collider.y + other_collider.height),
+                Vector2(other_collider.x, other_collider.y + other_collider.height)
+            )
+
+            # Ejes para ambos polígonos
+            axes = [
+                vector2_normalize(vector2_subtract(self_collider.v2, self_collider.v1)),
+                vector2_normalize(vector2_subtract(self_collider.v3, self_collider.v2)),
+                vector2_normalize(vector2_subtract(other_polygon.v2, other_polygon.v1)),
+                vector2_normalize(vector2_subtract(other_polygon.v3, other_polygon.v2))
+            ]
+
+            # Colisión utilizando SAT
+            min_overlap = float('inf')
+            collision_normal = None
+
+            for axis in axes:
+                collision, overlap = overlap_on_axis(self_collider, other_polygon, axis)
+                if not collision:
+                    return False
+                if overlap < min_overlap:
+                    min_overlap = overlap
+                    collision_normal = axis
+
+            penetration_depth = min_overlap
+            normal = collision_normal
+
+            # Ajustar la dirección de la normal si es necesario
+            center_self = vector2_subtract(vector2_add(vector2_add(self_collider.v1, self_collider.v2), vector2_add(self_collider.v3, self_collider.v4)), Vector2(4, 4))
+            center_other = Vector2(other_collider.x + other_collider.width / 2, other_collider.y + other_collider.height / 2)
+            direction = vector2_normalize(vector2_subtract(center_other, center_self))
+
+        elif self_collider_type == "ROT_BOX" and other_collider_type == "CIRCLE":
+            # Obtener los colliders de tipo "ROT_BOX" y "CIRCLE"
+            self_collider: RectanglePolygon = self.Collider()
+            other_collider: Circle = other_obj.Collider()
+
+            # Ejes para el polígono rotado (ROT_BOX)
+            axes = [
+                vector2_normalize(vector2_subtract(self_collider.v2, self_collider.v1)),
+                vector2_normalize(vector2_subtract(self_collider.v3, self_collider.v2))
+            ]
+
+            # Ejes adicionales: desde el centro del círculo hacia los vértices más cercanos del ROT_BOX
+            closest_vertex = min([self_collider.v1, self_collider.v2, self_collider.v3, self_collider.v4], 
+                                key=lambda v: vector2_length(vector2_subtract(v, other_collider.position)))
+            axis_circle = vector2_normalize(vector2_subtract(closest_vertex, other_collider.position))
+            axes.append(axis_circle)
+
+            # Colisión utilizando SAT
+            min_overlap = float('inf')
+            collision_normal = None
+
+            for axis in axes:
+                collision, overlap = overlap_on_axis(self_collider, other_collider, axis)
+                if not collision:
+                    return False
+                if overlap < min_overlap:
+                    min_overlap = overlap
+                    collision_normal = axis
+
+            penetration_depth = min_overlap
+            normal = collision_normal
+
+            # Ajustar la dirección de la normal si es necesario
+            center_self = vector2_subtract(vector2_add(vector2_add(self_collider.v1, self_collider.v2), vector2_add(self_collider.v3, self_collider.v4)), Vector2(4, 4))
+            direction = vector2_normalize(vector2_subtract(other_collider.position, center_self))
+
+           
         # Aplicar la repulsión (ajustar magnitudes según sea necesario)
         
         
@@ -185,22 +337,53 @@ class Collider(Entity) :
         scale_y = self.world_scale.y * self.size.y
         
         world_post = self.world_position
-        origin = self.origin
+        origin = vector2_multiply(self.origin, self.size)
         
-        position_x = world_post.x - (origin.x * self.size.x)
-        position_y = world_post.y - (origin.y * self.size.y)
-        radius = (self.world_scale.x * self.size.y + self.world_scale.y * self.size.y) / 4
+        position_x = world_post.x - origin.x
+        position_y = world_post.y - origin.y
+        
+        
+        radius = (self.world_scale.x * self.size.x + self.world_scale.y * self.size.y) / 4
         
         if self.how_collider == "BOX" : 
+            
+            # Usar DrawRe
             return Rectangle(
                 position_x, position_y, scale_x, scale_y
             )
         elif self.how_collider == "CIRCLE" : 
+            
             return Circle(
                 position=Vector2(position_x, position_y), radius=radius
             )
         
-       
+        elif self.how_collider == "ROT_BOX":
+            # Obtener la posición central del colisionador
+            center = Vector2((position_x + origin.x) , (position_y + origin.y) )
+            
+            # Definir las esquinas del rectángulo sin rotar
+            v1 = Vector2(position_x, position_y)  # Esquina superior izquierda
+            v2 = Vector2(position_x + scale_x, position_y)  # Esquina superior derecha
+            v3 = Vector2(position_x + scale_x, position_y + scale_y)  # Esquina inferior derecha
+            v4 = Vector2(position_x, position_y + scale_y)  # Esquina inferior izquierda
+            
+            # Función para rotar alrededor del centro
+            def rotate_around_center(point, center, angle):
+                # Trasladar el punto al origen respecto al centro
+                translated_point = vector2_subtract(point, center)
+                # Aplicar rotación
+                rotated_point = vector2_rotate(translated_point, angle)
+                # Trasladar de vuelta al espacio del colisionador
+                return vector2_add(rotated_point, center)
+            
+            # Rotar los puntos alrededor del centro usando la rotación local
+            angle = math.radians(self.world_rotation)
+            v1 = rotate_around_center(v1, center, angle)
+            v2 = rotate_around_center(v2, center, angle)
+            v3 = rotate_around_center(v3, center, angle)
+            v4 = rotate_around_center(v4, center, angle)
+            
+            return RectanglePolygon(v1, v2, v3, v4)
     """
     # Detectar el collider con las otras Entitys
     """
@@ -232,6 +415,10 @@ class Collider(Entity) :
                 elif entity.how_collider == "CIRCLE":
                     if check_collision_circle_rectangle(entity.Collider(), self.Collider()):
                         return entity
+                
+                elif entity.how_collider == "ROT_BOX":
+                    if check_collision_rectanglepolygon_rectangle(entity.Collider(), self.Collider()):
+                        return entity
 
             # Colisiones de CIRCLE con otros tipos
             elif self.how_collider == "CIRCLE":
@@ -242,6 +429,24 @@ class Collider(Entity) :
                 elif entity.how_collider == "BOX":
                     if check_collision_circle_rectangle(self.Collider(), entity.Collider()):
                         return entity
+                    
+                elif entity.how_collider == "ROT_BOX":
+                    if check_collision_rectanglepolygon_circle(entity.Collider(), self.Collider()):
+                        return entity
+
+            elif self.how_collider == "ROT_BOX":
+                
+                if entity.how_collider == "BOX":
+                    if check_collision_rectanglepolygon_rectangle(self.Collider(), entity.Collider()):
+                        return entity
+                
+                if entity.how_collider == "CIRCLE":
+                    if check_collision_rectanglepolygon_circle(self.Collider(), entity.Collider()):
+                        return entity
+                elif entity.how_collider == "ROT_BOX":
+                    if check_collision_rectanglepolygon(entity.Collider(), self.Collider()):
+                        return entity
+            
 
             if self.collision_range_to_use != 0 :
                 if i > self.collision_range_to_use:
@@ -271,8 +476,9 @@ class Collider(Entity) :
         
         if self.use_basic_model == True and self.visible:
             if self.distance_to_sort < self.min_activation_distance or self.min_activation_distance == 0 :
-                collider : Rectangle | Circle | Capsule = self.Collider()
+                collider : Rectangle | Circle | Capsule | RectanglePolygon = self.Collider()
                 if self.how_collider == "BOX" :
+
                     draw_rectangle_v(
                         Vector2(collider.x, collider.y), Vector2(collider.width, collider.height), self.color
                         ) 
@@ -281,9 +487,15 @@ class Collider(Entity) :
                     draw_rectangle_lines_ex(
                         rect, 2, BLACK
                     )
+                    
                 elif self.how_collider == "CIRCLE" : 
                     draw_circle_v(collider.position, collider.radius, self.color)
 
+                elif self.how_collider == "ROT_BOX" : 
+                    draw_line_v(collider.v1, collider.v2, self.color)
+                    draw_line_v(collider.v2, collider.v3, self.color)
+                    draw_line_v(collider.v3, collider.v4, self.color)
+                    draw_line_v(collider.v4, collider.v1, self.color)
         
         super().Draw()
         
@@ -302,6 +514,8 @@ class Raycast(Entity) :
     - `color`: Color, el color del rayo para su representación visual.
     - `size`: Vector2, tamaño de la entidad (aunque no es directamente relevante para el rayo).
     - `Colliders`: Lista global que almacena todos los colisionadores, incluyendo el rayo.
+    - `vector_distance_to_sort` : Vector2, vector de distancia para ordenar las entidades.
+    - `min_activation_distance` : float, distancia mínima para activar la entidad.
 
     Métodos:
     - `__init__()`: Inicializa el rayo con sus atributos, añadiéndolo a la lista de colisionadores.
